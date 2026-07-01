@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "WHN-Scan",
+  title: "WNH Scan",
   description: "ระบบสแกนบาร์โค้ดเข้าระบบ IPISS",
 };
 

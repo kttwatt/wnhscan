@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { DepartmentMultiSelect } from "@/components/auth/department-multi-select";
 import { Button } from "@/components/ui/button";
-import { PageTabs } from "@/components/ui/page-tabs";
 import { PasswordInput } from "@/components/ui/password-input";
 import type { DepartmentRow } from "@/lib/auth/departments-db";
 import { formatUserRole } from "@/lib/auth/roles";
@@ -15,12 +14,7 @@ import { createUserWithAdminAuthAction } from "./actions";
 
 const ROLES: UserRole[] = ["user", "manager", "admin"];
 
-const LOGIN_TABS = [
-  { id: "login", label: "เข้าสู่ระบบ" },
-  { id: "create", label: "สร้างผู้ใช้" },
-] as const;
-
-type LoginTabId = (typeof LOGIN_TABS)[number]["id"];
+type LoginTabId = "login" | "create";
 
 type LoginFormProps = {
   departments: DepartmentRow[];
@@ -88,27 +82,16 @@ export function LoginForm({ departments }: LoginFormProps) {
     <div className="flex min-h-screen items-center justify-center bg-surface-page p-6">
       <div className="card-whitespace w-full max-w-md">
         <div className="mb-8 text-center">
-          <p className="text-2xl font-bold text-navy-900">WHN-Scan</p>
+          <p className="text-2xl font-bold text-navy-900">WNH Scan</p>
           <h1 className="mt-2 text-lg font-semibold text-navy-900">
             {activeTab === "login" ? "เข้าสู่ระบบ" : "สร้างผู้ใช้ใหม่"}
           </h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            {activeTab === "login"
-              ? "ระบบสแกนบาร์โค้ดเข้าระบบ IPISS"
-              : "สำหรับผู้ดูแลระบบ — สร้างบัญชีผู้ใช้ใหม่"}
-          </p>
+          {activeTab === "create" ? (
+            <p className="mt-1 text-sm text-text-secondary">
+              สำหรับผู้ดูแลระบบ — สร้างบัญชีผู้ใช้ใหม่
+            </p>
+          ) : null}
         </div>
-
-        <PageTabs
-          tabs={[...LOGIN_TABS]}
-          value={activeTab}
-          onChange={(id) => {
-            setActiveTab(id as LoginTabId);
-            setError(null);
-            setMessage(null);
-          }}
-          className="mb-6"
-        />
 
         {message ? (
           <p className="mb-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800" role="status">
@@ -161,14 +144,29 @@ export function LoginForm({ departments }: LoginFormProps) {
               {loading ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
             </Button>
 
-            <p className="text-right">
-              <Link
-                href="/forgot-password"
-                className="text-xs font-medium text-blue-primary hover:underline"
-              >
-                ลืมรหัสผ่าน?
-              </Link>
-            </p>
+            <div className="space-y-1 text-right">
+              <p>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-medium text-blue-primary hover:underline"
+                >
+                  ลืมรหัสผ่าน?
+                </Link>
+              </p>
+              <p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("create");
+                    setError(null);
+                    setMessage(null);
+                  }}
+                  className="text-xs font-medium text-blue-primary hover:underline"
+                >
+                  สร้างผู้ใช้
+                </button>
+              </p>
+            </div>
           </form>
         ) : (
           <form
@@ -261,6 +259,20 @@ export function LoginForm({ departments }: LoginFormProps) {
             <Button type="submit" variant="primary" disabled={isPending} className="w-full disabled:opacity-60">
               {isPending ? "กำลังสร้าง…" : "สร้างผู้ใช้"}
             </Button>
+
+            <p className="text-right">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("login");
+                  setError(null);
+                  setMessage(null);
+                }}
+                className="text-xs font-medium text-blue-primary hover:underline"
+              >
+                กลับไปเข้าสู่ระบบ
+              </button>
+            </p>
           </form>
         )}
 

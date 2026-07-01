@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-surface-page p-6">
       <div className="card-whitespace w-full max-w-md">
         <div className="mb-8 text-center">
-          <p className="text-2xl font-bold text-navy-900">WHN-Scan</p>
+          <p className="text-2xl font-bold text-navy-900">WNH Scan</p>
           <h1 className="mt-2 text-lg font-semibold text-navy-900">ลืมรหัสผ่าน</h1>
           <p className="mt-1 text-sm text-text-secondary">
             กรอกอีเมลที่ลงทะเบียนไว้ ระบบจะส่งลิงก์ตั้งรหัสผ่านใหม่ให้ทางอีเมล

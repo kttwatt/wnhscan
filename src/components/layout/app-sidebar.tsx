@@ -61,7 +61,7 @@ export function AppSidebar({
         <div className="border-b border-white/10 px-4 py-4">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <p className="text-lg font-bold tracking-tight text-white">WHN-Scan</p>
+              <p className="text-lg font-bold tracking-tight text-white">WNH Scan</p>
               <p className="mt-0.5 text-xs text-white/50">wnhscan</p>
             </div>
             <SidebarToggle open onClick={onToggle} variant="dark" />
