@@ -1,0 +1,10 @@
+# WNHScan — linked Supabase project (wnhscan)
+# Dashboard: https://supabase.com/dashboard/project/cntmbmearmagtlhjysgx/settings/general
+
+project_id = "cntmbmearmagtlhjysgx"
+
+[api]
+enabled = true
+
+[db]
+major_version = 17

@@ -1,0 +1,294 @@
+@import "tailwindcss";
+
+:root {
+  --navy-950: #0a1222;
+  --navy-900: #0f1d3a;
+  --navy-800: #152a4a;
+  --blue-primary: #2b6fff;
+  --blue-hover: #1d5ae8;
+  --blue-light: #e8f0ff;
+  --yellow-accent: #f5c518;
+  --yellow-light: #fef9e7;
+  --surface-page: #f5f7fb;
+  --surface-card: #ffffff;
+  --border: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+
+@theme inline {
+  --color-navy-950: var(--navy-950);
+  --color-navy-900: var(--navy-900);
+  --color-navy-800: var(--navy-800);
+  --color-blue-primary: var(--blue-primary);
+  --color-blue-hover: var(--blue-hover);
+  --color-blue-light: var(--blue-light);
+  --color-yellow-accent: var(--yellow-accent);
+  --color-yellow-light: var(--yellow-light);
+  --color-surface-page: var(--surface-page);
+  --color-surface-card: var(--surface-card);
+  --color-border: var(--border);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --font-sans: var(--font-inter);
+  --radius-theme: var(--radius);
+  --radius-theme-lg: var(--radius-lg);
+}
+
+body {
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+/* Whitespace-style primary button */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg bg-blue-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-hover;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-surface-card px-5 py-2.5 text-sm font-semibold text-text-primary transition-colors hover:bg-blue-light hover:border-blue-primary/30;
+}
+
+.btn-danger {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg border border-red-300 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:border-red-400 hover:bg-red-100;
+}
+
+.btn-hero {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-navy-900 shadow-md transition-colors hover:bg-blue-light;
+}
+
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-blue-light hover:text-blue-primary;
+}
+
+.card-whitespace {
+  @apply rounded-xl border border-border bg-surface-card p-6;
+}
+
+.section-navy {
+  @apply rounded-xl bg-navy-900 px-8 py-8 text-white;
+}
+
+@keyframes scan-path-hint-blink {
+  0%,
+  100% {
+    box-shadow:
+      0 10px 15px -3px rgb(0 0 0 / 0.1),
+      0 0 0 0 rgba(255, 255, 255, 0);
+    transform: scale(1);
+  }
+
+  50% {
+    box-shadow:
+      0 10px 15px -3px rgb(0 0 0 / 0.1),
+      0 0 0 3px rgba(255, 255, 255, 0.95),
+      0 0 24px rgba(255, 255, 255, 0.45);
+    transform: scale(1.03);
+  }
+}
+
+.animate-scan-path-hint-blink {
+  animation: scan-path-hint-blink 0.55s ease-in-out 3;
+}
+
+@keyframes search-intro-blink {
+  0%,
+  100% {
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+
+  50% {
+    box-shadow:
+      0 1px 2px 0 rgb(0 0 0 / 0.05),
+      0 0 0 3px rgb(43 111 255 / 0.35),
+      0 0 20px rgb(43 111 255 / 0.18);
+  }
+}
+
+.animate-search-intro-blink {
+  animation: search-intro-blink 0.55s ease-in-out 3;
+}
+
+@keyframes barcode-flow-x {
+  from {
+    transform: translateX(-33.333%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes barcode-flow-x-reverse {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-33.333%);
+  }
+}
+
+@keyframes barcode-scan-beam {
+  0% {
+    left: -30%;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+.barcode-flow-texture {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgb(255 255 255 / 0.05) 0,
+    rgb(255 255 255 / 0.05) 2px,
+    transparent 2px,
+    transparent 6px,
+    rgb(255 255 255 / 0.03) 6px,
+    rgb(255 255 255 / 0.03) 8px,
+    transparent 8px,
+    transparent 14px,
+    rgb(255 255 255 / 0.04) 14px,
+    rgb(255 255 255 / 0.04) 15px,
+    transparent 15px,
+    transparent 22px
+  );
+  background-size: 88px 100%;
+  animation: barcode-texture-drift 24s linear infinite;
+}
+
+@keyframes barcode-texture-drift {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 88px 0;
+  }
+}
+
+.barcode-flow-track {
+  animation: barcode-flow-x linear infinite;
+  will-change: transform;
+}
+
+.barcode-flow-track-reverse {
+  animation-name: barcode-flow-x-reverse;
+}
+
+.barcode-scan-beam {
+  animation: barcode-scan-beam 10s ease-in-out infinite;
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barcode-flow-track,
+  .barcode-scan-beam,
+  .barcode-flow-texture {
+    animation: none;
+  }
+
+  .barcode-scan-beam {
+    display: none;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .catalog-print-root,
+  .catalog-print-root * {
+    visibility: visible;
+  }
+
+  .catalog-print-root {
+    position: absolute !important;
+    inset: 0 !important;
+    overflow: visible !important;
+    background: white !important;
+    padding: 0 !important;
+  }
+
+  .catalog-print-toolbar {
+    display: none !important;
+  }
+
+  .catalog-print-dialog {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .catalog-print-sheet {
+    padding: 0 !important;
+    min-height: 0 !important;
+  }
+
+  .catalog-print-pages {
+    gap: 0 !important;
+  }
+
+  .catalog-print-page {
+    box-sizing: border-box;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 10mm;
+    break-after: page;
+    page-break-after: always;
+    background: white;
+  }
+
+  .catalog-print-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .catalog-print-header {
+    margin-bottom: 4mm;
+  }
+
+  .catalog-print-group-title {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .catalog-print-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 2.5mm !important;
+  }
+
+  .catalog-print-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
