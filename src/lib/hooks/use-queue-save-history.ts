@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
 import {
   flattenPendingSaveHistory,
   listPendingSaveHistory,
@@ -10,7 +9,6 @@ import {
 import { PENDING_CHANGED_EVENT } from "@/lib/pending/pending-store";
 
 export function useQueueSaveHistory(departmentId: string): PendingSaveHistoryRow[] {
-  const pathname = usePathname();
   const [version, setVersion] = useState(0);
 
   const refresh = useCallback(() => {
@@ -19,7 +17,7 @@ export function useQueueSaveHistory(departmentId: string): PendingSaveHistoryRow
 
   useEffect(() => {
     refresh();
-  }, [departmentId, pathname, refresh]);
+  }, [departmentId, refresh]);
 
   useEffect(() => {
     const onChange = () => refresh();

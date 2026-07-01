@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Lock } from "lucide-react";
 
 type DepartmentSwitcherProps = {
   value?: string;
@@ -8,6 +8,9 @@ type DepartmentSwitcherProps = {
   locked?: boolean;
   onChange?: (departmentId: string) => void;
 };
+
+const departmentBadgeClass =
+  "inline-flex items-center gap-1.5 rounded-md bg-blue-light px-3 py-1 text-sm font-semibold text-blue-primary";
 
 export function DepartmentSwitcher({
   value = "",
@@ -22,15 +25,16 @@ export function DepartmentSwitcher({
     <div className="inline-flex items-center gap-2 rounded-lg border border-dashed border-border bg-surface-card px-4 py-2">
       <span className="text-sm text-text-secondary">เลือกหน่วยงาน</span>
       {isLocked ? (
-        <span className="rounded-md bg-blue-light px-3 py-1 text-sm font-semibold text-blue-primary">
-          {value} (ล็อกหน่วยงาน)
+        <span className={departmentBadgeClass}>
+          {value}
+          <Lock className="h-3.5 w-3.5 shrink-0" aria-label="ล็อกหน่วยงาน" />
         </span>
       ) : (
-        <div className="relative">
+        <div className={`relative ${departmentBadgeClass}`}>
           <select
             value={value}
             onChange={(e) => onChange?.(e.target.value)}
-            className="appearance-none rounded-md border border-border bg-white py-1.5 pl-3 pr-8 text-sm font-semibold text-navy-900 outline-none focus:border-blue-primary focus:ring-2 focus:ring-blue-primary/20"
+            className="appearance-none bg-transparent pr-5 outline-none focus:ring-0"
           >
             {units.map((u) => (
               <option key={u} value={u}>
@@ -39,7 +43,7 @@ export function DepartmentSwitcher({
             ))}
           </select>
           <ChevronDown
-            className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
+            className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-blue-primary"
             aria-hidden
           />
         </div>

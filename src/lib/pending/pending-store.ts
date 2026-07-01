@@ -136,6 +136,13 @@ export function addToPendingFromCart(departmentId: string, items: CartSaveItem[]
   notifyPendingChanged();
 }
 
+/** บันทึกชุดประวัติ + แจ้ง UI หลังบันทึกคิวสำเร็จ (ใช้เมื่อ persist ผ่าน Supabase) */
+export function recordPendingCartSaved(departmentId: string, items: CartSaveItem[]): void {
+  if (items.length === 0) return;
+  appendPendingSaveBatch(departmentId, items);
+  notifyPendingChanged();
+}
+
 export function removePendingCodes(departmentId: string, codes: string[]): void {
   if (codes.length === 0) return;
 

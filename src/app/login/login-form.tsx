@@ -140,17 +140,9 @@ export function LoginForm({ departments }: LoginFormProps) {
             </div>
 
             <div>
-              <div className="mb-1.5 flex items-center justify-between">
-                <label htmlFor="password" className="text-sm font-medium text-navy-900">
-                  รหัสผ่าน
-                </label>
-                <Link
-                  href="/forgot-password"
-                  className="text-xs font-medium text-blue-primary hover:underline"
-                >
-                  ลืมรหัสผ่าน?
-                </Link>
-              </div>
+              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-navy-900">
+                รหัสผ่าน
+              </label>
               <PasswordInput
                 id="password"
                 autoComplete="current-password"
@@ -168,6 +160,15 @@ export function LoginForm({ departments }: LoginFormProps) {
             >
               {loading ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
             </Button>
+
+            <p className="text-right">
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium text-blue-primary hover:underline"
+              >
+                ลืมรหัสผ่าน?
+              </Link>
+            </p>
           </form>
         ) : (
           <form

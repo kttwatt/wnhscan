@@ -13,10 +13,14 @@ export function DashboardShell({
   profile: UserProfile;
   children: React.ReactNode;
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   function toggleSidebar() {
     setSidebarOpen((v) => !v);
+  }
+
+  function closeSidebar() {
+    setSidebarOpen(false);
   }
 
   return (
@@ -24,9 +28,17 @@ export function DashboardShell({
       <div className="flex min-h-screen">
         <AppSidebar open={sidebarOpen} onToggle={toggleSidebar} />
 
-        <div className="relative flex min-w-0 flex-1 flex-col">
+        <div
+          className="relative flex min-w-0 flex-1 flex-col"
+          onClick={() => {
+            if (sidebarOpen) closeSidebar();
+          }}
+        >
           {!sidebarOpen ? (
-            <div className="flex items-center border-b border-border bg-surface-card px-4 py-3">
+            <div
+              className="flex items-center border-b border-border bg-surface-card px-4 py-3"
+              onClick={(e) => e.stopPropagation()}
+            >
               <SidebarToggle open={false} onClick={() => setSidebarOpen(true)} />
             </div>
           ) : null}

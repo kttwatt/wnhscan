@@ -298,7 +298,7 @@ export function QueuePanel({
 
             <div className="mt-6 flex justify-end">
               <Button variant="primary" onClick={onSavePending} disabled={saving}>
-                บันทึก
+                {saving ? "กำลังบันทึก…" : "บันทึก"}
               </Button>
             </div>
           </>

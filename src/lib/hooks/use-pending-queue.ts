@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
-import { usePathname } from "next/navigation";
 import {
   addPendingAction,
   removePendingAction,
@@ -9,6 +8,7 @@ import {
 } from "@/lib/pending/pending-actions";
 import {
   addToPendingFromCart,
+  recordPendingCartSaved,
   PENDING_CHANGED_EVENT,
   removePendingCodes,
   updatePendingItemQuantity,
@@ -16,14 +16,13 @@ import {
 } from "@/lib/pending/pending-store";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import {
+  applyCartToPendingStore,
   getPendingSnapshot,
   refreshPending,
   subscribePending,
 } from "@/lib/hooks/pending-queue-store";
 
 export function usePendingQueue(departmentId: string) {
-  const pathname = usePathname();
-
   const subscribe = useCallback(
     (onStoreChange: () => void) => subscribePending(departmentId, onStoreChange),
     [departmentId],
@@ -42,7 +41,7 @@ export function usePendingQueue(departmentId: string) {
   useEffect(() => {
     if (!departmentId) return;
     void refreshPending(departmentId);
-  }, [departmentId, pathname]);
+  }, [departmentId]);
 
   useEffect(() => {
     if (!departmentId) return;
@@ -57,12 +56,19 @@ export function usePendingQueue(departmentId: string) {
 
   const saveCartToPending = useCallback(
     async (cartItems: CartSaveItem[]) => {
+      if (cartItems.length === 0) return;
+
       if (isSupabaseConfigured()) {
-        await addPendingAction(departmentId, cartItems);
-      } else {
-        addToPendingFromCart(departmentId, cartItems);
+        const result = await addPendingAction(departmentId, cartItems);
+        if (!result.ok) throw new Error(result.error);
+        recordPendingCartSaved(departmentId, cartItems);
+        applyCartToPendingStore(departmentId, cartItems);
+        void refreshPending(departmentId, true);
+        return;
       }
-      await refreshPending(departmentId, true);
+
+      addToPendingFromCart(departmentId, cartItems);
+      applyCartToPendingStore(departmentId, cartItems);
     },
     [departmentId],
   );

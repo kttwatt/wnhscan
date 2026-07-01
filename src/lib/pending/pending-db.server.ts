@@ -100,34 +100,47 @@ export async function addPendingFromCart(
   const userId = await getCurrentUserId();
   const supabase = await createClient();
 
-  const codes = items.map((item) => item.code);
-  const { data: existingRows, error: readError } = await supabase
-    .from("pending_queue_items")
-    .select("item_code, quantity")
-    .eq("department_id", departmentId)
-    .in("item_code", codes);
+  // รวมจำนวนซ้ำในตะกร้า (กันกรณีรหัสซ้ำใน array เดียว)
+  const mergedByCode = new Map<string, CartSaveItem>();
+  for (const item of items) {
+    const existing = mergedByCode.get(item.code);
+    if (existing) {
+      mergedByCode.set(item.code, {
+        ...existing,
+        quantity: existing.quantity + item.quantity,
+      });
+    } else {
+      mergedByCode.set(item.code, item);
+    }
+  }
 
-  if (readError) throw readError;
+  for (const item of mergedByCode.values()) {
+    const { data: existing } = await supabase
+      .from("pending_queue_items")
+      .select("id, quantity")
+      .eq("department_id", departmentId)
+      .eq("item_code", item.code)
+      .maybeSingle();
 
-  const existingQtyByCode = new Map<string, number>(
-    (existingRows ?? []).map((row) => [row.item_code, row.quantity]),
-  );
-
-  const rows = items.map((item) => ({
-    department_id: departmentId,
-    item_code: item.code,
-    item_name: item.name,
-    barcode: item.barcode,
-    item_group: item.group,
-    quantity: (existingQtyByCode.get(item.code) ?? 0) + item.quantity,
-    added_by: userId,
-  }));
-
-  const { error: upsertError } = await supabase
-    .from("pending_queue_items")
-    .upsert(rows, { onConflict: "department_id,item_code" });
-
-  if (upsertError) throw upsertError;
+    if (existing) {
+      const { error } = await supabase
+        .from("pending_queue_items")
+        .update({ quantity: existing.quantity + item.quantity })
+        .eq("id", existing.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase.from("pending_queue_items").insert({
+        department_id: departmentId,
+        item_code: item.code,
+        item_name: item.name,
+        barcode: item.barcode,
+        item_group: item.group,
+        quantity: item.quantity,
+        added_by: userId,
+      });
+      if (error) throw error;
+    }
+  }
 }
 
 export async function updatePendingQuantity(

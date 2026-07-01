@@ -1,50 +1,45 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { canAccessCloseRound, selectableDepartments } from "@/lib/auth/access";
 import { useSession } from "@/components/auth/session-provider";
-import { countPendingAction } from "@/lib/pending/pending-actions";
+import { PENDING_CHANGED_EVENT } from "@/lib/pending/pending-store";
 import {
-  countPendingQtyForDepartments,
-  PENDING_CHANGED_EVENT,
-} from "@/lib/pending/pending-store";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
+  getPendingCountSnapshot,
+  refreshPendingCount,
+  subscribePendingCount,
+} from "@/lib/hooks/close-round-pending-count-store";
 
 /** จำนวนชิ้นจดไว้ก่อนทั้งหมดในขอบเขตผู้ใช้ — badge เมนู ปิดรอบสแกน */
 export function useCloseRoundPendingCount(): number {
   const profile = useSession();
-  const pathname = usePathname();
   const departments = useMemo(() => selectableDepartments(profile), [profile]);
   const canShow = canAccessCloseRound(profile);
-  const [count, setCount] = useState(0);
 
-  const refresh = useCallback(async () => {
-    if (!canShow) {
-      setCount(0);
-      return;
-    }
-    if (isSupabaseConfigured()) {
-      const result = await countPendingAction(departments);
-      if (result.ok) setCount(result.data);
-      return;
-    }
-    setCount(countPendingQtyForDepartments(departments));
-  }, [canShow, departments]);
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => subscribePendingCount(departments, onStoreChange),
+    [departments],
+  );
+  const getSnapshot = useCallback(
+    () => getPendingCountSnapshot(departments),
+    [departments],
+  );
+
+  const count = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh, pathname]);
+    void refreshPendingCount(departments, canShow);
+  }, [departments, canShow]);
 
   useEffect(() => {
-    const onPendingChanged = () => void refresh();
+    const onPendingChanged = () => void refreshPendingCount(departments, canShow, true);
     window.addEventListener(PENDING_CHANGED_EVENT, onPendingChanged);
     window.addEventListener("focus", onPendingChanged);
     return () => {
       window.removeEventListener(PENDING_CHANGED_EVENT, onPendingChanged);
       window.removeEventListener("focus", onPendingChanged);
     };
-  }, [refresh]);
+  }, [departments, canShow]);
 
   return count;
 }

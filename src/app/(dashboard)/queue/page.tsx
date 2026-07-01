@@ -14,7 +14,6 @@ import { canAccessCloseRound } from "@/lib/auth/access";
 import { useCatalogItems } from "@/lib/hooks/use-catalog-items";
 import { formatItemGroup, searchItems } from "@/lib/catalog/search-items";
 import { usePendingQueue } from "@/lib/hooks/use-pending-queue";
-import { useQueueSaveHistory } from "@/lib/hooks/use-queue-save-history";
 import { useDepartmentScope } from "@/lib/hooks/use-department-scope";
 
 export default function QueuePage() {
@@ -23,9 +22,10 @@ export default function QueuePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState<CartRow[]>([]);
   const [savedSummary, setSavedSummary] = useState<CartRow[] | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const pending = usePendingQueue(departmentId);
-  const historyRows = useQueueSaveHistory(departmentId);
   const pendingCodes = useMemo(
     () => new Set(pending.items.map((item) => item.code)),
     [pending.items],
@@ -84,11 +84,19 @@ export default function QueuePage() {
   }
 
   async function saveCartToPending() {
-    if (cart.length === 0) return;
+    if (cart.length === 0 || saving) return;
     const snapshot = cart.map((row) => ({ ...row }));
-    await pending.saveCartToPending(cart);
-    setCart([]);
-    setSavedSummary(snapshot);
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await pending.saveCartToPending(cart);
+      setCart([]);
+      setSavedSummary(snapshot);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+    } finally {
+      setSaving(false);
+    }
   }
 
   const pendingSaveCopy = SCAN_SUMMARY_COPY.pending_save;
@@ -121,6 +129,10 @@ export default function QueuePage() {
       />
 
       <div className="flex flex-1 flex-col gap-6 p-8">
+        {saveError ? (
+          <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{saveError}</p>
+        ) : null}
+
         <QueuePanel
           departmentId={departmentId}
           items={deptItems}
@@ -133,6 +145,7 @@ export default function QueuePage() {
           onSetQuantity={setQuantity}
           onRemoveFromCart={removeFromCart}
           onSavePending={saveCartToPending}
+          saving={saving}
         />
 
         {pendingTotalQty > 0 ? (
@@ -145,7 +158,6 @@ export default function QueuePage() {
 
         <QueuePendingHistory
           departmentId={departmentId}
-          rows={historyRows}
           pendingCodes={pendingCodes}
           pendingItems={pending.items}
           edit={pendingEdit}

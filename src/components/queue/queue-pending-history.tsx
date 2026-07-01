@@ -12,12 +12,11 @@ import {
   applyLiveQuantitiesToBatches,
   filterPendingSaveBatches,
   groupSaveBatchesByDate,
-  listPendingSaveHistory,
+  listActivePendingBatches,
   listSaveHistoryDateKeys,
-  type PendingSaveHistoryRow,
+  flattenPendingSaveHistory,
   type QueueHistoryStatusFilter,
 } from "@/lib/pending/pending-save-history";
-import { PENDING_CHANGED_EVENT } from "@/lib/pending/pending-store";
 import type { PendingQueueItem } from "@/lib/pending/pending-store";
 import { useScanLogs } from "@/lib/hooks/use-scan-logs";
 import {
@@ -36,7 +35,6 @@ const STATUS_FILTERS: { id: QueueHistoryStatusFilter; label: string }[] = [
 
 type QueuePendingHistoryProps = {
   departmentId: string;
-  rows: PendingSaveHistoryRow[];
   pendingCodes: Set<string>;
   pendingItems: PendingQueueItem[];
   edit?: PendingItemEditHandlers;
@@ -44,7 +42,6 @@ type QueuePendingHistoryProps = {
 
 export function QueuePendingHistory({
   departmentId,
-  rows,
   pendingCodes,
   pendingItems,
   edit,
@@ -54,25 +51,30 @@ export function QueuePendingHistory({
   const [dateTo, setDateTo] = useState("");
   const { logs: scanLogs } = useScanLogs(departmentId);
 
+  const saveBatches = useMemo(
+    () => listActivePendingBatches(departmentId, pendingItems),
+    [departmentId, pendingItems],
+  );
+
+  const historyRows = useMemo(
+    () => flattenPendingSaveHistory(saveBatches),
+    [saveBatches],
+  );
+
   useEffect(() => {
-    const { from, to } = defaultSaveHistoryDateRange(rows);
+    const { from, to } = defaultSaveHistoryDateRange(historyRows);
     setDateFrom(from);
     setDateTo(to);
     setStatusFilter("pending");
-  }, [departmentId, rows]);
-
-  const saveBatches = useMemo(
-    () => listPendingSaveHistory(departmentId),
-    [departmentId, rows],
-  );
+  }, [departmentId, historyRows]);
 
   const dateOptions = useMemo(() => {
     const scanDateKeys = filterScanLogs(scanLogs, {
       departmentId,
       mode: "queue_scan",
     }).map((log) => toDateKey(log.savedAt));
-    return mergeDateKeys(listSaveHistoryDateKeys(rows), scanDateKeys);
-  }, [scanLogs, departmentId, rows]);
+    return mergeDateKeys(listSaveHistoryDateKeys(historyRows), scanDateKeys);
+  }, [scanLogs, departmentId, historyRows]);
 
   const filteredSaveBatches = useMemo(() => {
     if (!dateFrom || !dateTo) return [];
