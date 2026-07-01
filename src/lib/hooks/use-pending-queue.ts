@@ -1,54 +1,59 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import {
   addPendingAction,
-  listPendingAction,
   removePendingAction,
   updatePendingQuantityAction,
 } from "@/lib/pending/pending-actions";
 import {
   addToPendingFromCart,
-  getPendingForDepartment,
   PENDING_CHANGED_EVENT,
   removePendingCodes,
   updatePendingItemQuantity,
   type CartSaveItem,
-  type PendingQueueItem,
 } from "@/lib/pending/pending-store";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import {
+  getPendingSnapshot,
+  refreshPending,
+  subscribePending,
+} from "@/lib/hooks/pending-queue-store";
 
 export function usePendingQueue(departmentId: string) {
-  const [items, setItems] = useState<PendingQueueItem[]>([]);
   const pathname = usePathname();
 
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => subscribePending(departmentId, onStoreChange),
+    [departmentId],
+  );
+  const getSnapshot = useCallback(
+    () => getPendingSnapshot(departmentId),
+    [departmentId],
+  );
+  const items = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+
   const refresh = useCallback(async () => {
-    if (!departmentId) {
-      setItems([]);
-      return;
-    }
-    if (isSupabaseConfigured()) {
-      const result = await listPendingAction(departmentId);
-      if (result.ok) setItems(result.data);
-      return;
-    }
-    setItems(getPendingForDepartment(departmentId));
+    if (!departmentId) return;
+    await refreshPending(departmentId, true);
   }, [departmentId]);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh, pathname]);
+    if (!departmentId) return;
+    void refreshPending(departmentId);
+  }, [departmentId, pathname]);
 
   useEffect(() => {
-    const onPendingChanged = () => void refresh();
+    if (!departmentId) return;
+    const onPendingChanged = () => void refreshPending(departmentId, true);
     window.addEventListener(PENDING_CHANGED_EVENT, onPendingChanged);
     window.addEventListener("focus", onPendingChanged);
     return () => {
       window.removeEventListener(PENDING_CHANGED_EVENT, onPendingChanged);
       window.removeEventListener("focus", onPendingChanged);
     };
-  }, [refresh]);
+  }, [departmentId]);
 
   const saveCartToPending = useCallback(
     async (cartItems: CartSaveItem[]) => {
@@ -57,9 +62,9 @@ export function usePendingQueue(departmentId: string) {
       } else {
         addToPendingFromCart(departmentId, cartItems);
       }
-      await refresh();
+      await refreshPending(departmentId, true);
     },
-    [departmentId, refresh],
+    [departmentId],
   );
 
   const removeCompleted = useCallback(
@@ -69,9 +74,9 @@ export function usePendingQueue(departmentId: string) {
       } else {
         removePendingCodes(departmentId, codes);
       }
-      await refresh();
+      await refreshPending(departmentId, true);
     },
-    [departmentId, refresh],
+    [departmentId],
   );
 
   const updateQuantity = useCallback(
@@ -81,9 +86,9 @@ export function usePendingQueue(departmentId: string) {
       } else {
         updatePendingItemQuantity(departmentId, code, quantity);
       }
-      await refresh();
+      await refreshPending(departmentId, true);
     },
-    [departmentId, refresh],
+    [departmentId],
   );
 
   const removeItem = useCallback(
@@ -93,9 +98,9 @@ export function usePendingQueue(departmentId: string) {
       } else {
         removePendingCodes(departmentId, [code]);
       }
-      await refresh();
+      await refreshPending(departmentId, true);
     },
-    [departmentId, refresh],
+    [departmentId],
   );
 
   return {

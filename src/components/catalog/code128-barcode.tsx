@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import JsBarcode from "jsbarcode";
 
 type Code128BarcodeProps = {
   value: string;
@@ -30,21 +29,31 @@ export function Code128Barcode({
 
   useEffect(() => {
     if (!svgRef.current || !value) return;
-    try {
-      JsBarcode(svgRef.current, value, {
-        format: "CODE128",
-        width: opts.width,
-        height: opts.height,
-        displayValue: opts.displayValue,
-        fontSize: opts.fontSize,
-        fontOptions: "bold",
-        margin: opts.margin,
-        background: "transparent",
-        lineColor: "#000000",
-      });
-    } catch {
-      svgRef.current.innerHTML = "";
-    }
+    let cancelled = false;
+    const el = svgRef.current;
+
+    void import("jsbarcode").then(({ default: JsBarcode }) => {
+      if (cancelled || !el) return;
+      try {
+        JsBarcode(el, value, {
+          format: "CODE128",
+          width: opts.width,
+          height: opts.height,
+          displayValue: opts.displayValue,
+          fontSize: opts.fontSize,
+          fontOptions: "bold",
+          margin: opts.margin,
+          background: "transparent",
+          lineColor: "#000000",
+        });
+      } catch {
+        el.innerHTML = "";
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [value, opts.displayValue, opts.fontSize, opts.height, opts.margin, opts.width]);
 
   return (

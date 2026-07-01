@@ -62,6 +62,9 @@ export async function listPendingForDepartment(
   return (data as PendingRow[]).map((row) => mapPendingRow(row, departmentCode));
 }
 
+// NOTE: A SQL-side SUM would need an RPC/migration (out of scope for the
+// perf quick-wins pass). Query already selects only `quantity`, so the JS
+// reduce is the lightest option without a schema change.
 export async function countPendingQtyForDepartmentCodes(
   departmentCodes: string[],
 ): Promise<number> {
@@ -97,33 +100,34 @@ export async function addPendingFromCart(
   const userId = await getCurrentUserId();
   const supabase = await createClient();
 
-  for (const item of items) {
-    const { data: existing } = await supabase
-      .from("pending_queue_items")
-      .select("id, quantity")
-      .eq("department_id", departmentId)
-      .eq("item_code", item.code)
-      .maybeSingle();
+  const codes = items.map((item) => item.code);
+  const { data: existingRows, error: readError } = await supabase
+    .from("pending_queue_items")
+    .select("item_code, quantity")
+    .eq("department_id", departmentId)
+    .in("item_code", codes);
 
-    if (existing) {
-      const { error } = await supabase
-        .from("pending_queue_items")
-        .update({ quantity: existing.quantity + item.quantity })
-        .eq("id", existing.id);
-      if (error) throw error;
-    } else {
-      const { error } = await supabase.from("pending_queue_items").insert({
-        department_id: departmentId,
-        item_code: item.code,
-        item_name: item.name,
-        barcode: item.barcode,
-        item_group: item.group,
-        quantity: item.quantity,
-        added_by: userId,
-      });
-      if (error) throw error;
-    }
-  }
+  if (readError) throw readError;
+
+  const existingQtyByCode = new Map<string, number>(
+    (existingRows ?? []).map((row) => [row.item_code, row.quantity]),
+  );
+
+  const rows = items.map((item) => ({
+    department_id: departmentId,
+    item_code: item.code,
+    item_name: item.name,
+    barcode: item.barcode,
+    item_group: item.group,
+    quantity: (existingQtyByCode.get(item.code) ?? 0) + item.quantity,
+    added_by: userId,
+  }));
+
+  const { error: upsertError } = await supabase
+    .from("pending_queue_items")
+    .upsert(rows, { onConflict: "department_id,item_code" });
+
+  if (upsertError) throw upsertError;
 }
 
 export async function updatePendingQuantity(

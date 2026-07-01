@@ -9,13 +9,14 @@ type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
 export async function listScanBatchesAction(
   departmentCode?: string,
+  limit?: number,
 ): Promise<ActionResult<ScanLogEntry[]>> {
   if (!isSupabaseConfigured()) {
     return { ok: false, error: "ยังไม่ได้ตั้งค่า Supabase" };
   }
 
   try {
-    const data = await listScanBatches(departmentCode);
+    const data = await listScanBatches(departmentCode, limit);
     return { ok: true, data };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "โหลดประวัติไม่สำเร็จ" };

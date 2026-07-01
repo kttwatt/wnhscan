@@ -1,30 +1,45 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { listScanBatchesAction } from "@/lib/scan/scan-actions";
-import { SCAN_LOG_CHANGED_EVENT, type ScanLogEntry } from "@/lib/scan/scan-log";
+import { SCAN_LOG_CHANGED_EVENT } from "@/lib/scan/scan-log";
+import {
+  getScanLogsSnapshot,
+  refreshScanLogs,
+  subscribeScanLogs,
+} from "@/lib/hooks/scan-logs-store";
+
+const subscribeMounted = () => () => {};
 
 export function useScanLogs(departmentCode?: string) {
-  const [logs, setLogs] = useState<ScanLogEntry[]>([]);
-  const [mounted, setMounted] = useState(false);
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => subscribeScanLogs(departmentCode, onStoreChange),
+    [departmentCode],
+  );
+  const getSnapshot = useCallback(
+    () => getScanLogsSnapshot(departmentCode),
+    [departmentCode],
+  );
+
+  const logs = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const mounted = useSyncExternalStore(
+    subscribeMounted,
+    () => true,
+    () => false,
+  );
 
   const refresh = useCallback(async () => {
-    if (!isSupabaseConfigured()) {
-      setLogs([]);
-      return;
-    }
-    const result = await listScanBatchesAction(departmentCode);
-    if (result.ok) setLogs(result.data);
+    if (!isSupabaseConfigured()) return;
+    await refreshScanLogs(departmentCode, true);
   }, [departmentCode]);
 
   useEffect(() => {
-    setMounted(true);
-    void refresh();
-    const onChange = () => void refresh();
+    if (!isSupabaseConfigured()) return;
+    void refreshScanLogs(departmentCode);
+    const onChange = () => void refreshScanLogs(departmentCode, true);
     window.addEventListener(SCAN_LOG_CHANGED_EVENT, onChange);
     return () => window.removeEventListener(SCAN_LOG_CHANGED_EVENT, onChange);
-  }, [refresh]);
+  }, [departmentCode]);
 
   return { logs, mounted, refresh };
 }

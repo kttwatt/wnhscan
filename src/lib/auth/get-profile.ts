@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { listDepartments } from "@/lib/auth/departments-db.server";
@@ -77,7 +78,7 @@ async function enrichProfiles(rows: DbProfileRow[]): Promise<ProfileRow[]> {
   });
 }
 
-export async function getProfile(): Promise<UserProfile | null> {
+export const getProfile = cache(async (): Promise<UserProfile | null> => {
   if (!isSupabaseConfigured()) return null;
 
   const supabase = await createClient();
@@ -95,10 +96,12 @@ export async function getProfile(): Promise<UserProfile | null> {
 
   if (!profile) return null;
 
-  const activeDepartmentCodes = await loadActiveDepartmentCodes();
-  const [enriched] = await enrichProfiles([profile]);
+  const [activeDepartmentCodes, [enriched]] = await Promise.all([
+    loadActiveDepartmentCodes(),
+    enrichProfiles([profile]),
+  ]);
   return toUserProfile(enriched, activeDepartmentCodes);
-}
+});
 
 export async function toAccessProfile(row: ProfileRow): Promise<UserProfile> {
   const activeDepartmentCodes = await loadActiveDepartmentCodes();

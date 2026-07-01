@@ -70,7 +70,12 @@ function mapBatchRow(row: BatchRow): ScanLogEntry {
   };
 }
 
-export async function listScanBatches(departmentCode?: string): Promise<ScanLogEntry[]> {
+const DEFAULT_SCAN_BATCH_LIMIT = 500;
+
+export async function listScanBatches(
+  departmentCode?: string,
+  limit: number = DEFAULT_SCAN_BATCH_LIMIT,
+): Promise<ScanLogEntry[]> {
   const supabase = await createClient();
   let query = supabase
     .from("scan_batches")
@@ -81,7 +86,8 @@ export async function listScanBatches(departmentCode?: string): Promise<ScanLogE
       scan_batch_items(item_code, item_name, barcode, quantity, verified)
     `,
     )
-    .order("saved_at", { ascending: false });
+    .order("saved_at", { ascending: false })
+    .limit(limit);
 
   if (departmentCode) {
     const departmentId = await getDepartmentUuid(departmentCode);
