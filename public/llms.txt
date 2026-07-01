@@ -1,0 +1,22 @@
+# WNH Scan
+
+> Barcode-scanning inventory app for hospital departments (Thai UI). Staff scan supply barcodes to record stock counts for the IPISS system.
+
+## Public pages
+
+- [Login](/login): Sign in to the application
+- [Forgot password](/forgot-password): Request a password reset email
+- [Reset password](/reset-password): Set a new password after email verification
+
+## Authenticated app (login required)
+
+- [Dashboard](/): Home — scan flow overview and volume stats
+- [Instant scan](/scan): Build and verify a scan batch, then save
+- [Pending queue](/queue): Add items to the department pending queue
+- [Close round](/close-round): Review pending queue and finalize a scan round (managers and admins)
+- [Department](/department): Manage department catalog and users (managers and admins)
+- [Admin](/admin): System administration (admins only)
+
+## Documentation
+
+- [Project context](https://github.com/kttwatt/wnhscan/blob/master/context.md): Architecture, roles, data model, and auth
