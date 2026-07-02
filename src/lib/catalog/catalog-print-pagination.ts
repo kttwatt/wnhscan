@@ -10,9 +10,9 @@ export type PrintPage = {
   showHeader: boolean;
 };
 
-/** ช่องต่อหน้า A4 (2 คอล.) — หน้าแรกหัก header */
-const SLOTS_FIRST_PAGE = 16;
-const SLOTS_OTHER_PAGES = 18;
+/** ช่องต่อหน้า A4 (2 คอล. × 7 แถว) — หน้าแรกหัก header */
+const SLOTS_FIRST_PAGE = 12;
+const SLOTS_OTHER_PAGES = 14;
 /** หัวข้อหมวด = 1 แถวเต็ม (2 ช่อง) */
 const GROUP_TITLE_SLOTS = 2;
 

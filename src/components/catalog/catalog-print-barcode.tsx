@@ -24,7 +24,7 @@ export const CatalogPrintBarcode = memo(function CatalogPrintBarcode({
 
   return (
     <div
-      className={`flex w-full max-w-[85%] items-center justify-center [&>svg]:block [&>svg]:h-auto [&>svg]:max-w-full ${className}`}
+      className={`flex w-full max-w-full items-center justify-center [&>svg]:block [&>svg]:h-auto [&>svg]:max-h-[18mm] [&>svg]:min-h-[14mm] [&>svg]:w-full [&>svg]:max-w-full ${className}`}
       role="img"
       aria-label={`บาร์โค้ด ${value}`}
       dangerouslySetInnerHTML={{ __html: svgHtml }}

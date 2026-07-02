@@ -5,7 +5,7 @@ import { Download, Loader2, Printer, X } from "lucide-react";
 import { CatalogPrintBarcode } from "@/components/catalog/catalog-print-barcode";
 import { Button } from "@/components/ui/button";
 import { buildPrintPages, type PrintBlock } from "@/lib/catalog/catalog-print-pagination";
-import { warmCode128SvgCache } from "@/lib/catalog/code128-barcode-svg";
+import { warmCode128PngCache, warmCode128SvgCache } from "@/lib/catalog/code128-barcode-svg";
 import { downloadCatalogPdf } from "@/lib/catalog/download-catalog-pdf";
 import { formatDepartmentLabel } from "@/lib/auth/departments";
 import type { CatalogItem } from "@/lib/catalog/types";
@@ -64,7 +64,7 @@ function PrintBlockView({ block }: { block: PrintBlock }) {
 
   const { item } = block;
   return (
-    <article className="catalog-print-item flex min-h-[26mm] flex-col items-center justify-center border border-border px-2 py-2 print:min-h-[26mm] print:border-black/20">
+    <article className="catalog-print-item flex min-h-[38mm] flex-col items-center justify-center border border-border px-2 py-2.5 print:min-h-[38mm] print:border-black/20">
       <CatalogPrintBarcode value={item.barcode} />
       <p className="mt-1 w-full text-center font-mono text-[10px] font-semibold leading-tight text-navy-900 print:text-[9px]">
         {item.code}
@@ -87,6 +87,8 @@ export function CatalogPrintPreview({
 }: CatalogPrintPreviewProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<{ current: number; total: number } | null>(null);
   const [preparing, setPreparing] = useState(false);
 
   const pages = useMemo(
@@ -104,6 +106,7 @@ export function CatalogPrintPreview({
     const barcodes = groupedItems.flatMap((g) => g.items.map((item) => item.barcode));
     const timer = window.setTimeout(() => {
       warmCode128SvgCache(barcodes);
+      warmCode128PngCache(barcodes);
       setPreparing(false);
     }, 0);
     return () => window.clearTimeout(timer);
@@ -123,13 +126,24 @@ export function CatalogPrintPreview({
   }
 
   async function handleDownloadPdf() {
-    const el = sheetRef.current;
-    if (!el || !canDownload) return;
+    if (!canDownload) return;
     setDownloading(true);
+    setDownloadError(null);
+    setDownloadProgress(null);
     try {
-      await downloadCatalogPdf(el, departmentId);
+      await downloadCatalogPdf({
+        departmentId,
+        deptLabel,
+        pages,
+        totalCount,
+        filteredCount,
+        onProgress: (current, total) => setDownloadProgress({ current, total }),
+      });
+    } catch (err) {
+      setDownloadError(err instanceof Error ? err.message : "ไม่สามารถสร้าง PDF ได้");
     } finally {
       setDownloading(false);
+      setDownloadProgress(null);
     }
   }
 
@@ -147,13 +161,18 @@ export function CatalogPrintPreview({
               ตัวอย่างก่อนพิมพ์
             </h2>
             <p className="mt-0.5 text-sm text-text-secondary">
-              {deptLabel} · {scopeLabel ?? "พิมพ์ทั้งหมด"} · A4 2 คอลัมน์
+              {deptLabel} · {scopeLabel ?? "พิมพ์ทั้งหมด"} · A4 2 คอลัมน์ 7 แถว
               {isFiltered ? ` · ${filteredCount} จาก ${totalCount} รายการ` : ` · ${totalCount} รายการ`}
               {pageCount > 0 ? ` · ${pageCount} หน้า` : ""}
             </p>
             <p className="mt-1 text-xs text-text-muted">
               ตรวจสอบ layout แล้วกด พิมพ์ ดาวน์โหลด PDF หรือ Ctrl+P
             </p>
+            {downloadError ? (
+              <p className="mt-2 text-sm text-red-600" role="alert">
+                {downloadError}
+              </p>
+            ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="primary" onClick={handlePrint} disabled={!canPrint}>
@@ -169,7 +188,9 @@ export function CatalogPrintPreview({
               {downloading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                  กำลังสร้างไฟล์ .PDF
+                  {downloadProgress
+                    ? `กำลังสร้าง PDF… ${downloadProgress.current}/${downloadProgress.total}`
+                    : "กำลังสร้างไฟล์ .PDF"}
                 </>
               ) : (
                 <>
@@ -201,7 +222,7 @@ export function CatalogPrintPreview({
               {pages.map((page) => (
                 <div
                   key={page.pageNumber}
-                  className="catalog-print-page mx-auto box-border min-h-[297mm] w-full border border-border bg-white p-[10mm] shadow-sm print:min-h-[297mm] print:border-0 print:p-[10mm] print:shadow-none"
+                  className={`catalog-print-page mx-auto box-border h-[297mm] min-h-[297mm] w-full border border-border bg-white p-[10mm] shadow-sm print:h-[297mm] print:min-h-[297mm] print:border-0 print:p-[10mm] print:shadow-none${page.pageNumber > 1 ? " catalog-print-page--break" : ""}`}
                 >
                   {page.showHeader ? (
                     <PrintSheetHeader

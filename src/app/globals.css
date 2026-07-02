@@ -290,5 +290,20 @@ body {
   .catalog-print-item {
     break-inside: avoid;
     page-break-inside: avoid;
+    min-height: 38mm;
   }
+}
+
+/* html2pdf export — ไม่เว้นหน้าว่างระหว่างแต่ละ A4 */
+.catalog-print-sheet--exporting .catalog-print-pages {
+  gap: 0 !important;
+}
+
+.catalog-print-sheet--exporting .catalog-print-page {
+  margin: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  height: 297mm !important;
+  min-height: 297mm !important;
+  overflow: visible;
 }
