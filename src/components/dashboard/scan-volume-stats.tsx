@@ -66,7 +66,7 @@ export function ScanVolumeStatsGrid({
   if (layout === "strip") {
     return (
       <div
-        className={`flex divide-x divide-border overflow-hidden rounded-xl border border-border ${className}`}
+        className={`grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-border sm:flex sm:gap-0 sm:bg-transparent sm:divide-x sm:divide-border sm:border sm:border-border ${className}`}
       >
         {cards}
       </div>

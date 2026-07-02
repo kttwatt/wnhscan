@@ -61,7 +61,7 @@ export function CloseRoundPageClient() {
         }
       />
 
-      <div className="flex flex-1 flex-col gap-6 p-8">
+      <div className="flex flex-1 flex-col gap-4 p-4 sm:gap-6 sm:p-8">
         {pendingTotalQty > 0 ? (
           <CloseRoundBanner
             departmentId={departmentId}
@@ -74,7 +74,7 @@ export function CloseRoundPageClient() {
           />
         ) : null}
 
-        <div className="card-whitespace space-y-8">
+        <div className="card-whitespace space-y-6 p-4 sm:space-y-8 sm:p-6">
           <ScanVolumeStatsGrid
             stats={volumeStats}
             selectedKey={scanLogModalOpen ? selectedStatKey : null}
