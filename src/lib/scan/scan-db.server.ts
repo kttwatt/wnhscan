@@ -11,6 +11,8 @@ import { removePendingCodesForDepartment } from "@/lib/pending/pending-db.server
 
 export type ScanVolumeStats = Record<ScanVolumeStatKey, number>;
 
+type ServerClient = Awaited<ReturnType<typeof createClient>>;
+
 type DeptRef = { code: string } | { code: string }[] | null;
 
 function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
@@ -18,9 +20,12 @@ function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
-async function getDepartmentUuid(departmentCode: string): Promise<string> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+async function getDepartmentUuid(
+  departmentCode: string,
+  supabase?: ServerClient,
+): Promise<string> {
+  const client = supabase ?? (await createClient());
+  const { data, error } = await client
     .from("departments")
     .select("id")
     .eq("code", departmentCode)
@@ -34,11 +39,11 @@ async function getDepartmentUuid(departmentCode: string): Promise<string> {
   return data.id;
 }
 
-async function getCurrentUserId(): Promise<string> {
-  const supabase = await createClient();
+async function getCurrentUserId(supabase?: ServerClient): Promise<string> {
+  const client = supabase ?? (await createClient());
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await client.auth.getUser();
   if (!user) throw new Error("กรุณาเข้าสู่ระบบ");
   return user.id;
 }
@@ -161,9 +166,11 @@ export async function saveScanBatch(params: {
     throw new Error("ไม่มีรายการที่จะบันทึก");
   }
 
-  const departmentId = await getDepartmentUuid(params.departmentCode);
-  const userId = await getCurrentUserId();
   const supabase = await createClient();
+  const [departmentId, userId] = await Promise.all([
+    getDepartmentUuid(params.departmentCode, supabase),
+    getCurrentUserId(supabase),
+  ]);
 
   const { data: batch, error: batchError } = await supabase
     .from("scan_batches")
@@ -200,7 +207,12 @@ export async function saveScanBatch(params: {
     (params.mode === "queue_scan" ? params.items.map((item) => item.code) : []);
 
   if (codesToRemove.length > 0) {
-    await removePendingCodesForDepartment(params.departmentCode, codesToRemove);
+    await removePendingCodesForDepartment(
+      params.departmentCode,
+      codesToRemove,
+      departmentId,
+      supabase,
+    );
   }
 
   return {

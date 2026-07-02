@@ -118,15 +118,17 @@ export function useScanWizard() {
           }
         }
 
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new Event(SCAN_LOG_CHANGED_EVENT));
-          if (mode === "queue_scan") {
-            window.dispatchEvent(new Event(PENDING_CHANGED_EVENT));
-          }
-        }
-
         setShowSummary(true);
         if (typeof onSuccess === "function") onSuccess();
+
+        if (typeof window !== "undefined") {
+          queueMicrotask(() => {
+            window.dispatchEvent(new Event(SCAN_LOG_CHANGED_EVENT));
+            if (mode === "queue_scan") {
+              window.dispatchEvent(new Event(PENDING_CHANGED_EVENT));
+            }
+          });
+        }
       } finally {
         setSaving(false);
       }

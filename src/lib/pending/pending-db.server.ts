@@ -1,9 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import type { CartSaveItem, PendingQueueItem } from "@/lib/pending/pending-store";
 
-async function getDepartmentUuid(departmentCode: string): Promise<string> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+type ServerClient = Awaited<ReturnType<typeof createClient>>;
+
+async function getDepartmentUuid(
+  departmentCode: string,
+  supabase?: ServerClient,
+): Promise<string> {
+  const client = supabase ?? (await createClient());
+  const { data, error } = await client
     .from("departments")
     .select("id")
     .eq("code", departmentCode)
@@ -168,16 +173,18 @@ export async function updatePendingQuantity(
 export async function removePendingCodesForDepartment(
   departmentCode: string,
   codes: string[],
+  departmentId?: string,
+  supabase?: ServerClient,
 ): Promise<void> {
   if (codes.length === 0) return;
 
-  const departmentId = await getDepartmentUuid(departmentCode);
-  const supabase = await createClient();
+  const client = supabase ?? (await createClient());
+  const deptId = departmentId ?? (await getDepartmentUuid(departmentCode, client));
 
-  const { error } = await supabase
+  const { error } = await client
     .from("pending_queue_items")
     .delete()
-    .eq("department_id", departmentId)
+    .eq("department_id", deptId)
     .in("item_code", codes);
 
   if (error) throw error;
