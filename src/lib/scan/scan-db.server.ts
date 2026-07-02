@@ -1,7 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import type { ScanLogEntry, ScanLogItem } from "@/lib/scan/scan-log";
+import {
+  toDateKey,
+  todayDateKey,
+  weekDateRange,
+  type ScanVolumeStatKey,
+} from "@/lib/scan/scan-log-queries";
 import type { ScanMode } from "@/lib/scan/types";
 import { removePendingCodesForDepartment } from "@/lib/pending/pending-db.server";
+
+export type ScanVolumeStats = Record<ScanVolumeStatKey, number>;
 
 type DeptRef = { code: string } | { code: string }[] | null;
 
@@ -71,6 +79,47 @@ function mapBatchRow(row: BatchRow): ScanLogEntry {
 }
 
 const DEFAULT_SCAN_BATCH_LIMIT = 500;
+
+type StatsBatchRow = {
+  mode: string;
+  saved_at: string;
+  scan_batch_items: { quantity: number }[];
+};
+
+function sumBatchRowQuantity(row: StatsBatchRow): number {
+  return row.scan_batch_items.reduce((sum, item) => sum + item.quantity, 0);
+}
+
+/** Aggregate scan counts for the dashboard — last 7 days only, no item metadata. */
+export async function getScanVolumeStats(departmentCode: string): Promise<ScanVolumeStats> {
+  const departmentId = await getDepartmentUuid(departmentCode);
+  const supabase = await createClient();
+  const week = weekDateRange();
+  const today = todayDateKey();
+
+  const { data, error } = await supabase
+    .from("scan_batches")
+    .select("mode, saved_at, scan_batch_items(quantity)")
+    .eq("department_id", departmentId)
+    .gte("saved_at", `${week.from}T00:00:00`)
+    .order("saved_at", { ascending: false });
+
+  if (error) throw error;
+
+  const stats: ScanVolumeStats = { today: 0, week: 0, weekInstant: 0, weekQueue: 0 };
+  for (const row of (data ?? []) as StatsBatchRow[]) {
+    const dateKey = toDateKey(row.saved_at);
+    if (dateKey < week.from || dateKey > week.to) continue;
+
+    const qty = sumBatchRowQuantity(row);
+    stats.week += qty;
+    if (row.mode === "instant_scan") stats.weekInstant += qty;
+    if (row.mode === "queue_scan") stats.weekQueue += qty;
+    if (dateKey === today) stats.today += qty;
+  }
+
+  return stats;
+}
 
 export async function listScanBatches(
   departmentCode?: string,

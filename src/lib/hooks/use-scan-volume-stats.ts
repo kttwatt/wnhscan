@@ -1,38 +1,36 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
+import type { ScanVolumeStatKey } from "@/lib/scan/scan-log-queries";
+import { SCAN_LOG_CHANGED_EVENT } from "@/lib/scan/scan-log";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import {
-  sumScannedQuantity,
-  todayDateKey,
-  weekDateRange,
-  type ScanVolumeStatKey,
-} from "@/lib/scan/scan-log-queries";
-import { useScanLogs } from "@/lib/hooks/use-scan-logs";
+  getScanVolumeStatsSnapshot,
+  refreshScanVolumeStats,
+  subscribeScanVolumeStats,
+} from "@/lib/hooks/scan-volume-stats-store";
 
 export type ScanVolumeStats = Record<ScanVolumeStatKey, number>;
 
-const EMPTY_STATS: ScanVolumeStats = {
-  today: 0,
-  week: 0,
-  weekInstant: 0,
-  weekQueue: 0,
-};
-
 export function useScanVolumeStats(departmentId: string): ScanVolumeStats {
-  const { logs, mounted } = useScanLogs(departmentId);
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => subscribeScanVolumeStats(departmentId, onStoreChange),
+    [departmentId],
+  );
+  const getSnapshot = useCallback(
+    () => getScanVolumeStatsSnapshot(departmentId),
+    [departmentId],
+  );
 
-  return useMemo(() => {
-    if (!mounted) return EMPTY_STATS;
+  const stats = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
-    const today = todayDateKey();
-    const week = weekDateRange();
-    const base = { departmentId };
+  useEffect(() => {
+    if (!departmentId || !isSupabaseConfigured()) return;
+    void refreshScanVolumeStats(departmentId);
+    const onChange = () => void refreshScanVolumeStats(departmentId, true);
+    window.addEventListener(SCAN_LOG_CHANGED_EVENT, onChange);
+    return () => window.removeEventListener(SCAN_LOG_CHANGED_EVENT, onChange);
+  }, [departmentId]);
 
-    return {
-      today: sumScannedQuantity(logs, { ...base, dateFrom: today, dateTo: today }),
-      week: sumScannedQuantity(logs, { ...base, ...week }),
-      weekInstant: sumScannedQuantity(logs, { ...base, mode: "instant_scan", ...week }),
-      weekQueue: sumScannedQuantity(logs, { ...base, mode: "queue_scan", ...week }),
-    };
-  }, [departmentId, logs, mounted]);
+  return stats;
 }

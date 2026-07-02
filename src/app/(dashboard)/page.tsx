@@ -96,15 +96,17 @@ export default function HomePage() {
         ) : null}
       </div>
 
-      <ScanLogModal
-        open={scanLogModalOpen}
-        onClose={() => {
-          setScanLogModalOpen(false);
-          setSelectedStatKey(null);
-        }}
-        departmentId={departmentId}
-        initialStatKey={selectedStatKey}
-      />
+      {scanLogModalOpen ? (
+        <ScanLogModal
+          open
+          onClose={() => {
+            setScanLogModalOpen(false);
+            setSelectedStatKey(null);
+          }}
+          departmentId={departmentId}
+          initialStatKey={selectedStatKey}
+        />
+      ) : null}
     </>
   );
 }

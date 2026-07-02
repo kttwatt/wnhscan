@@ -1,6 +1,7 @@
 "use server";
 
-import { listScanBatches, saveScanBatch } from "@/lib/scan/scan-db.server";
+import { getScanVolumeStats, listScanBatches, saveScanBatch } from "@/lib/scan/scan-db.server";
+import type { ScanVolumeStats } from "@/lib/scan/scan-db.server";
 import type { ScanLogEntry, ScanLogItem } from "@/lib/scan/scan-log";
 import type { ScanMode } from "@/lib/scan/types";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -20,6 +21,21 @@ export async function listScanBatchesAction(
     return { ok: true, data };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "โหลดประวัติไม่สำเร็จ" };
+  }
+}
+
+export async function getScanVolumeStatsAction(
+  departmentCode: string,
+): Promise<ActionResult<ScanVolumeStats>> {
+  if (!isSupabaseConfigured()) {
+    return { ok: false, error: "ยังไม่ได้ตั้งค่า Supabase" };
+  }
+
+  try {
+    const data = await getScanVolumeStats(departmentCode);
+    return { ok: true, data };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "โหลดสถิติไม่สำเร็จ" };
   }
 }
 

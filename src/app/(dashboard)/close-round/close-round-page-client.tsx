@@ -97,24 +97,28 @@ export function CloseRoundPageClient() {
         </div>
       </div>
 
-      <PendingQueueModal
-        open={pendingModalOpen}
-        onClose={() => setPendingModalOpen(false)}
-        departmentId={departmentId}
-        items={pendingItems}
-        onRemoveCompleted={removeCompleted}
-        edit={pendingEdit}
-      />
+      {pendingModalOpen ? (
+        <PendingQueueModal
+          open
+          onClose={() => setPendingModalOpen(false)}
+          departmentId={departmentId}
+          items={pendingItems}
+          onRemoveCompleted={removeCompleted}
+          edit={pendingEdit}
+        />
+      ) : null}
 
-      <ScanLogModal
-        open={scanLogModalOpen}
-        onClose={() => {
-          setScanLogModalOpen(false);
-          setSelectedStatKey(null);
-        }}
-        departmentId={departmentId}
-        initialStatKey={selectedStatKey}
-      />
+      {scanLogModalOpen ? (
+        <ScanLogModal
+          open
+          onClose={() => {
+            setScanLogModalOpen(false);
+            setSelectedStatKey(null);
+          }}
+          departmentId={departmentId}
+          initialStatKey={selectedStatKey}
+        />
+      ) : null}
     </>
   );
 }
